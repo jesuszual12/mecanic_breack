@@ -1,0 +1,192 @@
+body {
+    zoom: 1.1;
+}
+
+.table-wrap {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.table-wrap > table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+
+.orders-panel .table-wrap > table {
+    min-width: max(100%, 640px);
+}
+
+.data-panel .table-wrap > table {
+    min-width: max(100%, 620px);
+}
+
+.table-wrap th,
+.table-wrap td {
+    overflow-wrap: anywhere;
+}
+
+.table-wrap .row-menu form {
+    position: static;
+    top: auto;
+    right: auto;
+    width: min(240px, 80vw);
+    max-height: none;
+    margin-top: 6px;
+    overflow: visible;
+    box-shadow: none;
+}
+
+.responsive-table th,
+.responsive-table td {
+    white-space: normal;
+}
+
+.status-action {
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) auto;
+    align-items: center;
+    gap: 5px;
+    min-width: 195px;
+}
+
+.status-action select {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #e3e8e2;
+    border-radius: 4px;
+    background: #fff;
+    padding: 7px;
+    color: #334139;
+    font: 400 10px 'DM Sans', 'Segoe UI', sans-serif;
+}
+
+.payroll-form {
+    display: grid;
+    grid-template-columns: 80px 130px minmax(100px, 1fr) auto;
+    align-items: center;
+    gap: 5px;
+    min-width: 360px;
+}
+
+.payroll-form input {
+    min-width: 0;
+    width: 100%;
+    border: 1px solid #e3e8e2;
+    border-radius: 4px;
+    padding: 7px;
+    font: 400 10px 'DM Sans', 'Segoe UI', sans-serif;
+}
+
+@media (max-width: 1100px) {
+    .payroll-form {
+        grid-template-columns: minmax(85px, .7fr) minmax(130px, 1fr);
+        min-width: 240px;
+    }
+
+    .payroll-form input:nth-of-type(3),
+    .payroll-form button {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 1100px) {
+    .table-wrap,
+    .team-table-wrap,
+    .history-table-wrap {
+        overflow: visible;
+    }
+
+    .table-wrap,
+    .data-panel .table-wrap,
+    .orders-panel .table-wrap {
+        margin: 0;
+    }
+
+    .history-panel .history-table-wrap {
+        margin: 0;
+    }
+
+    .responsive-table,
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .responsive-table {
+        min-width: 0 !important;
+    }
+
+    .responsive-table thead {
+        display: none;
+    }
+
+    .responsive-table tbody {
+        display: grid;
+        gap: 10px;
+        padding: 8px 12px;
+    }
+
+    .responsive-table tr {
+        border: 1px solid #e8ece7;
+        border-radius: 4px;
+        background: #fff;
+        padding: 4px 10px;
+    }
+
+    .responsive-table td {
+        display: grid;
+        grid-template-columns: minmax(100px, .7fr) minmax(0, 1.3fr);
+        align-items: start;
+        gap: 10px;
+        padding: 9px 2px !important;
+        border-bottom: 1px solid #eff1ee;
+        text-align: right;
+    }
+
+    .responsive-table td::before {
+        content: attr(data-label);
+        color: #78867d;
+        font-size: 9px;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .responsive-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .responsive-table td.empty-row,
+    .responsive-table td.empty-state {
+        display: block;
+        text-align: center !important;
+    }
+
+    .responsive-table td.empty-row::before,
+    .responsive-table td.empty-state::before {
+        content: none;
+    }
+
+    .responsive-table .status-action {
+        grid-template-columns: minmax(0, 1fr);
+        min-width: 0;
+    }
+
+    .responsive-table .row-menu form {
+        width: min(240px, 100%);
+    }
+
+    .payroll-form {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        min-width: 0;
+    }
+
+    .payroll-form input:nth-of-type(3),
+    .payroll-form button {
+        grid-column: span 2;
+    }
+}
