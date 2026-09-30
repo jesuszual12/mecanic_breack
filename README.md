@@ -29,3 +29,4 @@ Los técnicos no pueden registrar movimientos financieros ni administrar cuentas
 
 Las cotizaciones con flujo de autorización, convenios empresariales con calendario propio, reportes descargables, respaldos automáticos, evidencia fotográfica y facturación CFDI/SAT no forman parte de esta primera entrega. Las deudas mostradas actualmente corresponden al saldo pendiente de órdenes de trabajo.
 
+hola
