@@ -20,6 +20,9 @@
             <nav class="main-nav" aria-label="Navegación principal">
                 <a class="nav-link {{ request('panel', 'overview') === 'overview' ? 'active' : '' }}"
                     href="{{ route('dashboard') }}"><span class="nav-icon">⌂</span>Resumen</a>
+                <a class="nav-link {{ request('panel') === 'calendar' ? 'active' : '' }}"
+                    href="{{ route('dashboard', ['panel' => 'calendar', 'date' => $reportDate]) }}#schedule"><span
+                        class="nav-icon">▦</span>Agenda</a>
                 <a class="nav-link {{ request('panel') === 'orders' ? 'active' : '' }}"
                     href="{{ route('dashboard', ['panel' => 'orders']) }}"><span class="nav-icon">▤</span>Órdenes de
                     trabajo<span class="nav-count">{{ $activeCount }}</span></a>
@@ -55,8 +58,7 @@
                 @endcan
             </nav>
             <div class="sidebar-bottom">
-                <div class="shop-status"><span class="status-light"></span><span><strong>Taller
-                            abierto</strong><small>{{ now()->translatedFormat('l, j F') }}</small></span></div>
+                <div class="shop-status"><span class="status-light"></span><span><strong>Agenda del taller</strong><small>{{ now()->translatedFormat('l, j F') }}</small></span></div>
                 <div class="user-chip"><span
                         class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><span><strong>{{ auth()->user()->name }}</strong><small>{{ ['admin' => 'Administrador', 'manager' => 'Encargado', 'technician' => 'Técnico'][auth()->user()->role] ?? 'Personal' }}</small></span>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="logout-button"
@@ -68,7 +70,7 @@
         <main class="main-content">
             <header class="topbar">
                 <div class="breadcrumb">Taller <span>/</span>
-                    <strong>{{ ['orders' => 'Órdenes de trabajo', 'customers' => 'Clientes', 'vehicles' => 'Vehículos'][request('panel')] ?? 'Resumen' }}</strong>
+                    <strong>{{ ['orders' => 'Órdenes de trabajo', 'customers' => 'Clientes', 'vehicles' => 'Vehículos', 'inventory' => 'Refacciones', 'finance' => 'Finanzas', 'calendar' => 'Agenda', 'reports' => 'Reportes'][request('panel')] ?? 'Resumen' }}</strong>
                 </div>
                 <form class="topbar-search" method="GET" action="{{ route('dashboard') }}">
                     <input type="search" name="q" value="{{ request('q') }}"
@@ -92,7 +94,7 @@
                     <div>
                         <p class="eyebrow">OPERACIÓN DEL TALLER <span class="eyebrow-rule"></span>
                             {{ now()->translatedFormat('D, d M Y') }}</p>
-                        <h1>{{ ['orders' => 'Órdenes de trabajo', 'customers' => 'Clientes', 'vehicles' => 'Vehículos', 'inventory' => 'Refacciones', 'finance' => 'Finanzas', 'quotes' => 'Cotizaciones', 'team' => 'Equipo', 'reports' => 'Reportes'][request('panel')] ?? 'Resumen del taller' }}
+                        <h1>{{ ['orders' => 'Órdenes de trabajo', 'customers' => 'Clientes', 'vehicles' => 'Vehículos', 'inventory' => 'Refacciones', 'finance' => 'Finanzas', 'calendar' => 'Agenda del taller', 'quotes' => 'Cotizaciones', 'team' => 'Equipo', 'reports' => 'Reportes'][request('panel')] ?? 'Resumen del taller' }}
                         </h1>
                         <p class="heading-subtitle">Control claro de cada vehículo, desde su recepción hasta la entrega.
                         </p>
@@ -236,8 +238,22 @@
                                         @endforeach
                                     </select>
                                 </label>
+                                <div class="damage-editor" data-damage-editor>
+                                    <div class="damage-editor-heading">
+                                        <div><p class="eyebrow">INSPECCIÓN DE CARROCERÍA</p><strong>Marca los daños en el vehículo 3D</strong></div>
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" data-damage-clear>Limpiar</button>
+                                    </div>
+                                    <div class="damage-view" data-damage-view aria-label="Modelo 3D interactivo del vehículo"></div>
+                                    <p class="damage-hint">Arrastra para girar · Haz clic en una pieza para marcarla</p>
+                                    <div class="damage-parts" data-damage-parts aria-label="Seleccionar pieza"></div>
+                                    <div class="damage-selected" data-damage-selected></div>
+                                    <input type="hidden" name="damage_points_json" value="{{ old('damage_points_json', '[]') }}">
+                                </div>
                                 <label>Motivo de ingreso
                                     <textarea name="complaint" rows="2" placeholder="Describe brevemente el problema" required>{{ old('complaint') }}</textarea>
+                                </label>
+                                <label>Fecha y hora programada
+                                    <input class="form-control" type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}">
                                 </label>
                                 @can('manage-finances')
                                     <div class="form-row"><label>Mano de obra <span class="input-prefix"><i>$</i><input
@@ -504,6 +520,60 @@
                         </div>
                 </section>@endcan
 
+                <section class="module-section" id="schedule">
+                    <div class="module-title">
+                        <div>
+                            <p class="eyebrow">CALENDARIO DE SERVICIO</p>
+                            <h2>Agenda del taller</h2>
+                        </div>
+                        <form class="schedule-date-form" method="GET" action="{{ route('dashboard') }}">
+                            <input type="hidden" name="panel" value="calendar">
+                            <label class="visually-hidden" for="schedule-date">Fecha de agenda</label>
+                            <input class="form-control form-control-sm" id="schedule-date" type="date" name="date" value="{{ $reportDate }}">
+                            <button class="btn btn-sm btn-outline-success" type="submit">Ver día</button>
+                        </form>
+                    </div>
+                    @can('manage-finances')
+                        <div class="daily-summary" aria-label="Corte del día seleccionado">
+                            <article><small>INGRESOS DEL DÍA</small><strong>${{ number_format($dailyIncome, 2) }}</strong><span>Pagos, convenios y ventas</span></article>
+                            <article><small>GASTOS OPERATIVOS</small><strong>${{ number_format($dailyExpenses, 2) }}</strong><span>Compras y otros gastos</span></article>
+                            <article><small>NÓMINA</small><strong>${{ number_format($dailyPayroll, 2) }}</strong><span>Pagada en esta fecha</span></article>
+                            <article><small>VENTAS DE REFACCIONES</small><strong>${{ number_format($dailySales, 2) }}</strong><span>{{ $dailySalesCount }} ventas</span></article>
+                            <article class="daily-net"><small>NETO DEL DÍA</small><strong>${{ number_format($dailyIncome - $dailyExpenses - $dailyPayroll, 2) }}</strong><span>Ingresos menos gastos y nómina</span></article>
+                        </div>
+                    @endcan
+                    <article class="panel schedule-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <p class="eyebrow">CITAS PROGRAMADAS</p>
+                                <h2>{{ \Illuminate\Support\Carbon::parse($reportDate)->translatedFormat('l, j \d\e F Y') }}</h2>
+                            </div>
+                            <a class="button button-outline" href="#new-order">＋ Programar servicio</a>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr><th>HORA</th><th>ORDEN</th><th>VEHÍCULO</th><th>CLIENTE</th><th>MOTIVO</th><th>ESTADO</th></tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($scheduledOrders as $scheduledOrder)
+                                        <tr>
+                                            <td><strong>{{ $scheduledOrder->scheduled_at->format('H:i') }}</strong></td>
+                                            <td><a class="order-number" href="{{ route('work-orders.show', $scheduledOrder) }}">{{ $scheduledOrder->number }}</a></td>
+                                            <td>{{ $scheduledOrder->vehicle->make }} {{ $scheduledOrder->vehicle->model }}<small class="table-secondary">{{ $scheduledOrder->vehicle->plate }}</small></td>
+                                            <td>{{ $scheduledOrder->customer->name }}</td>
+                                            <td>{{ \Illuminate\Support\Str::limit($scheduledOrder->complaint, 55) }}</td>
+                                            <td><span class="status-pill status-{{ $scheduledOrder->status }}"><i></i>{{ ['pending' => 'Pendiente', 'in_progress' => 'En proceso', 'completed' => 'Terminado', 'delivered' => 'Entregado'][$scheduledOrder->status] ?? $scheduledOrder->status }}</span></td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="6" class="empty-row">No hay servicios programados para esta fecha. Puedes agendar una hora desde “Nueva orden”.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+
                 @can('manage-inventory')<section class="module-section" id="inventory">
                         <div class="module-title">
                             <div>
@@ -513,6 +583,10 @@
                         </div>
                         <div class="module-grid">
                             <article class="panel data-panel">
+                                <div class="inventory-search">
+                                    <label for="inventory-search-input">Buscar refacción por nombre, proveedor o SKU</label>
+                                    <input class="form-control form-control-sm" id="inventory-search-input" type="search" placeholder="Ej. filtro de aceite o SKU-123" data-inventory-search>
+                                </div>
                                 <div class="table-wrap">
                                     <table>
                                         <thead>
@@ -523,11 +597,12 @@
                                                 <th>COSTO</th>
                                                 <th>PRECIO</th>
                                                 <th>MOVIMIENTO</th>
+                                                <th>VENTA</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @forelse ($inventoryItems as $item)
-                                                <tr>
+                                                <tr data-inventory-search-row data-search="{{ \Illuminate\Support\Str::lower($item->name.' '.$item->sku.' '.$item->supplier) }}">
                                                     <td><strong>{{ $item->name }}</strong></td>
                                                     <td>{{ $item->supplier ?: '—' }}<small
                                                             class="table-secondary">{{ $item->sku ?: 'Sin SKU' }}</small>
@@ -568,13 +643,32 @@
                                                             </form>
                                                         </details>
                                                     </td>
+                                                    <td>
+                                                        <details class="row-menu sale-menu">
+                                                            <summary aria-label="Vender {{ $item->name }}">Vender</summary>
+                                                            <form method="POST" action="{{ route('inventory.sales.store', $item) }}">
+                                                                @csrf
+                                                                <label for="sale-quantity-{{ $item->id }}">Cantidad</label>
+                                                                <input id="sale-quantity-{{ $item->id }}" type="number" name="quantity" min="0.01" max="{{ $item->stock }}" step="0.01" required>
+                                                                <label for="sale-method-{{ $item->id }}">Forma de pago</label>
+                                                                <select id="sale-method-{{ $item->id }}" name="payment_method" required>
+                                                                    <option value="cash">Efectivo</option>
+                                                                    <option value="card">Tarjeta</option>
+                                                                    <option value="transfer">Transferencia</option>
+                                                                </select>
+                                                                <small class="sale-price">Precio unitario: ${{ number_format($item->sale_price, 2) }}</small>
+                                                                <button class="button button-small" type="submit">Registrar venta</button>
+                                                            </form>
+                                                        </details>
+                                                    </td>
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="6" class="empty-row">No hay refacciones registradas.
+                                                    <td colspan="7" class="empty-row">No hay refacciones registradas.
                                                     </td>
                                                 </tr>
                                             @endforelse
+                                            <tr class="inventory-no-results" hidden><td colspan="7" class="empty-row">No se encontraron refacciones con esa búsqueda.</td></tr>
                                         </tbody>
                                     </table>
                                 </div>

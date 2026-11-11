@@ -33,7 +33,8 @@
                 <h1>{{ $workOrder->number }}</h1>
                 <p>{{ $workOrder->received_at->format('d/m/Y H:i') }} · <a
                         href="{{ route('vehicles.show', $workOrder->vehicle) }}">Historial del vehículo
-                        {{ $workOrder->vehicle->plate }}</a></p>
+                        {{ $workOrder->vehicle->plate }}</a>@if ($workOrder->scheduled_at) · Cita:
+                        {{ $workOrder->scheduled_at->format('d/m/Y H:i') }}@endif</p>
             </div><span
                 class="status-pill status-{{ $workOrder->status }}"><i></i>{{ ['pending' => 'Pendiente', 'in_progress' => 'En proceso', 'completed' => 'Terminado', 'delivered' => 'Entregado'][$workOrder->status] ?? $workOrder->status }}</span>
         </section>
@@ -60,6 +61,14 @@
                         @if ($workOrder->diagnosis)
                             <small>DIAGNÓSTICO</small>
                             <p>{{ $workOrder->diagnosis }}</p>
+                        @endif
+                        @if ($workOrder->damage_points)
+                            <small>DAÑOS DE CARROCERÍA</small>
+                            <ul class="damage-detail-list">
+                                @foreach ($workOrder->damage_points as $damage)
+                                    <li><strong>{{ ['hood' => 'Cofre', 'roof' => 'Techo', 'trunk' => 'Cajuela', 'front_bumper' => 'Defensa delantera', 'rear_bumper' => 'Defensa trasera', 'left_front_door' => 'Puerta delantera izquierda', 'right_front_door' => 'Puerta delantera derecha', 'left_rear_door' => 'Puerta trasera izquierda', 'right_rear_door' => 'Puerta trasera derecha', 'left_front_fender' => 'Salpicadera delantera izquierda', 'right_front_fender' => 'Salpicadera delantera derecha', 'left_rear_fender' => 'Salpicadera trasera izquierda', 'right_rear_fender' => 'Salpicadera trasera derecha'][$damage['part']] ?? $damage['part'] }}</strong><span>{{ $damage['detail'] }}</span></li>
+                                @endforeach
+                            </ul>
                         @endif
                     </div>
                 </article>

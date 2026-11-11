@@ -1,5 +1,9 @@
 import './bootstrap';
 
+if (document.querySelector('[data-damage-editor]')) {
+	import('./damage-editor');
+}
+
 document.querySelectorAll('.table-wrap table').forEach((table) => {
 	const headers = Array.from(table.tHead?.rows[0]?.cells ?? []).map((header) => header.textContent.trim() || 'Acciones');
 

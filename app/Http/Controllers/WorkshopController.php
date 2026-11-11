@@ -14,6 +14,7 @@ use App\Models\WorkOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -23,6 +24,9 @@ class WorkshopController extends Controller
     public function index(): View
     {
         $today = now()->toDateString();
+        $reportDate = request()->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+        ])['date'] ?? $today;
         $monthStart = now()->startOfMonth();
         $search = trim((string) request('q', ''));
         $canManageFinances = auth()->user()->can('manage-finances');
@@ -58,8 +62,32 @@ class WorkshopController extends Controller
             'receivedToday' => WorkOrder::whereDate('received_at', $today)->count(),
             'deliveredToday' => WorkOrder::whereDate('delivered_at', $today)->count(),
             'monthlyIncome' => $canManageFinances
-                ? (float) Payment::where('paid_at', '>=', $monthStart)->sum('amount') + (float) DebtPayment::where('paid_at', '>=', $monthStart)->sum('amount')
+                ? (float) Payment::where('paid_at', '>=', $monthStart)->sum('amount')
+                    + (float) DebtPayment::where('paid_at', '>=', $monthStart)->sum('amount')
+                    + (float) DB::table('inventory_sales')->where('sold_at', '>=', $monthStart)->sum('total')
                 : 0,
+            'dailyIncome' => $canManageFinances
+                ? (float) Payment::whereDate('paid_at', $reportDate)->sum('amount')
+                    + (float) DebtPayment::whereDate('paid_at', $reportDate)->sum('amount')
+                    + (float) DB::table('inventory_sales')->whereDate('sold_at', $reportDate)->sum('total')
+                : 0,
+            'dailySales' => $canManageFinances
+                ? (float) DB::table('inventory_sales')->whereDate('sold_at', $reportDate)->sum('total')
+                : 0,
+            'dailySalesCount' => $canManageFinances
+                ? DB::table('inventory_sales')->whereDate('sold_at', $reportDate)->count()
+                : 0,
+            'dailyExpenses' => $canManageFinances
+                ? (float) DB::table('expenses')->whereDate('spent_at', $reportDate)->sum('amount')
+                : 0,
+            'dailyPayroll' => $canManageFinances
+                ? (float) DB::table('payroll_payments')->whereDate('paid_at', $reportDate)->sum('amount')
+                : 0,
+            'reportDate' => $reportDate,
+            'scheduledOrders' => WorkOrder::with(['customer', 'vehicle'])
+                ->whereDate('scheduled_at', $reportDate)
+                ->orderBy('scheduled_at')
+                ->get(),
             'monthlyExpenses' => $canManageFinances ? DB::table('expenses')->where('spent_at', '>=', $monthStart)->sum('amount') : 0,
             'monthlyPayroll' => $canManageFinances ? DB::table('payroll_payments')->where('paid_at', '>=', $monthStart)->sum('amount') : 0,
             'orders' => $orderQuery->latest('received_at')->limit($search === '' ? 10 : 100)->get(),
@@ -73,7 +101,9 @@ class WorkshopController extends Controller
             'employees' => $canManageUsers ? DB::table('employees')->where('is_active', true)->orderBy('name')->get() : collect(),
             'warranties' => WorkOrder::with(['customer', 'vehicle'])->where('status', 'delivered')->where('warranty_days', '>', 0)->latest('delivered_at')->limit(8)->get(),
             'yearIncome' => $canManageFinances
-                ? (float) Payment::whereYear('paid_at', now()->year)->sum('amount') + (float) DebtPayment::whereYear('paid_at', now()->year)->sum('amount')
+                ? (float) Payment::whereYear('paid_at', now()->year)->sum('amount')
+                    + (float) DebtPayment::whereYear('paid_at', now()->year)->sum('amount')
+                    + (float) DB::table('inventory_sales')->whereYear('sold_at', now()->year)->sum('total')
                 : 0,
             'yearExpenses' => $canManageFinances ? DB::table('expenses')->whereYear('spent_at', now()->year)->sum('amount') : 0,
             'yearPayroll' => $canManageFinances ? DB::table('payroll_payments')->whereYear('paid_at', now()->year)->sum('amount') : 0,
@@ -165,6 +195,8 @@ class WorkshopController extends Controller
                 Rule::exists('vehicles', 'id')->where('customer_id', $request->input('customer_id')),
             ],
             'complaint' => ['required', 'string', 'max:3000'],
+            'scheduled_at' => ['nullable', 'date'],
+            'damage_points_json' => ['nullable', 'json', 'max:10000'],
             'labor_cost' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'parts_cost' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'other_cost' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
@@ -172,8 +204,18 @@ class WorkshopController extends Controller
             'warranty_days' => ['nullable', 'integer', 'between:0,3650'],
             'warranty_terms' => ['nullable', 'string', 'max:2000'],
         ]);
+        $damagePoints = json_decode($data['damage_points_json'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        Validator::make(['damage_points' => $damagePoints], [
+            'damage_points' => ['array', 'list', 'max:14'],
+            'damage_points.*.part' => ['required', 'string', Rule::in([
+                'hood', 'roof', 'trunk', 'front_bumper', 'rear_bumper',
+                'left_front_door', 'right_front_door', 'left_rear_door', 'right_rear_door',
+                'left_front_fender', 'right_front_fender', 'left_rear_fender', 'right_rear_fender',
+            ])],
+            'damage_points.*.detail' => ['required', 'string', 'max:300'],
+        ])->validate();
 
-        $order = DB::transaction(function () use ($data, $canManageFinances): WorkOrder {
+        $order = DB::transaction(function () use ($data, $canManageFinances, $damagePoints): WorkOrder {
             $total = (float) ($data['labor_cost'] ?? 0) + (float) ($data['parts_cost'] ?? 0) + (float) ($data['other_cost'] ?? 0);
             $paid = (float) ($data['initial_payment'] ?? 0);
 
@@ -191,6 +233,8 @@ class WorkshopController extends Controller
                 'status' => 'pending',
                 'complaint' => $data['complaint'],
                 'received_at' => now(),
+                'scheduled_at' => $data['scheduled_at'] ?? null,
+                'damage_points' => $damagePoints,
                 'labor_cost' => $canManageFinances ? ($data['labor_cost'] ?? 0) : 0,
                 'parts_cost' => $canManageFinances ? ($data['parts_cost'] ?? 0) : 0,
                 'other_cost' => $canManageFinances ? ($data['other_cost'] ?? 0) : 0,
@@ -580,6 +624,56 @@ class WorkshopController extends Controller
         });
 
         return redirect()->route('dashboard', ['panel' => 'inventory'])->with('success', 'Movimiento de inventario registrado.');
+    }
+
+    public function storeInventorySale(Request $request, InventoryItem $inventoryItem): RedirectResponse
+    {
+        $data = $request->validate([
+            'quantity' => ['required', 'numeric', 'gt:0'],
+            'payment_method' => ['required', Rule::in(['cash', 'card', 'transfer'])],
+        ]);
+
+        DB::transaction(function () use ($data, $inventoryItem): void {
+            $item = InventoryItem::whereKey($inventoryItem->id)->lockForUpdate()->firstOrFail();
+            $quantity = (float) $data['quantity'];
+
+            if ($quantity > (float) $item->stock) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'No hay existencias suficientes para completar esta venta.',
+                ]);
+            }
+
+            $total = round($quantity * (float) $item->sale_price, 2);
+            $item->decrement('stock', $quantity);
+            $saleId = DB::table('inventory_sales')->insertGetId([
+                'inventory_item_id' => $item->id,
+                'user_id' => auth()->id(),
+                'quantity' => $quantity,
+                'unit_price' => $item->sale_price,
+                'total' => $total,
+                'payment_method' => $data['payment_method'],
+                'sold_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            DB::table('inventory_movements')->insert([
+                'inventory_item_id' => $item->id,
+                'user_id' => auth()->id(),
+                'direction' => 'out',
+                'quantity' => $quantity,
+                'notes' => 'Venta directa',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $this->audit('inventory.sale.created', (object) [
+                'id' => $saleId,
+                'getKey' => fn () => $saleId,
+            ], ['inventory_item_id' => $item->id, 'quantity' => $quantity, 'total' => $total]);
+        });
+
+        return redirect()->route('dashboard', ['panel' => 'inventory'])
+            ->with('success', 'Venta registrada y existencia actualizada.');
     }
 
     public function storeExpense(Request $request): RedirectResponse

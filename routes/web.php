@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/convenios/{debtAccount}/abonos', [WorkshopController::class, 'storeDebtPayment'])->middleware('can:manage-finances')->name('debt-accounts.payments.store');
     Route::post('/inventario', [WorkshopController::class, 'storeInventoryItem'])->middleware('can:manage-inventory')->name('inventory.store');
     Route::post('/inventario/{inventoryItem}/movimientos', [WorkshopController::class, 'storeInventoryMovement'])->middleware('can:manage-inventory')->name('inventory.movements.store');
+    Route::post('/inventario/{inventoryItem}/ventas', [WorkshopController::class, 'storeInventorySale'])->middleware('can:manage-inventory')->name('inventory.sales.store');
     Route::post('/gastos', [WorkshopController::class, 'storeExpense'])->middleware('can:manage-finances')->name('expenses.store');
     Route::post('/empleados', [WorkshopController::class, 'storeEmployee'])->middleware('can:manage-users')->name('employees.store');
     Route::post('/empleados/{employee}/nomina', [WorkshopController::class, 'storePayrollPayment'])->middleware('can:manage-finances')->name('payroll.store');

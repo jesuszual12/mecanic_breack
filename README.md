@@ -7,7 +7,7 @@ Aplicación Laravel 12 para recibir vehículos y administrar órdenes de trabajo
 
 - **Lenguajes:** PHP 8.2, JavaScript, HTML (plantillas Blade) y CSS.
 - **Backend:** Laravel 12 
-- **Frontend:** Blade, Tailwind CSS 4 y estilos CSS propios.
+- **Frontend:** Blade, Bootstrap 5, Tailwind CSS 4 y estilos CSS propios; Three.js para inspección 3D.
 - **Base de datos:**  MySQL 
 - **Herramientas:** Composer para dependencias de PHP, npm para dependencias de JavaScript y Vite 7 para compilar los recursos del frontend.
 
@@ -15,10 +15,11 @@ Aplicación Laravel 12 para recibir vehículos y administrar órdenes de trabajo
 ## Funciones implementadas
 
 - Clientes y vehículos con placas, VIN y datos de contacto.
-- Recepción y órdenes con estados, costos, anticipos, saldo, garantía e historial por vehículo.
+- Recepción y órdenes con estados, costos, anticipos, saldo, garantía e historial por vehículo; inspección 3D para marcar y describir daños de carrocería.
+- Agenda diaria con fecha y hora programada para cada servicio.
 - Conceptos de mano de obra/servicio y refacciones descontadas del inventario.
-- Inventario con existencias mínimas, movimientos, proveedor y compras contabilizadas como gasto.
-- Cobros por orden, gastos, cuentas por cobrar y pagos de nómina.
+- Inventario con búsqueda por nombre, proveedor o SKU, existencias mínimas, movimientos, ventas directas y compras contabilizadas como gasto.
+- Cobros por orden, ventas de refacciones, gastos, cuentas por cobrar y pagos de nómina; corte diario de ingresos, gastos y flujo neto.
 - Personal y cuentas de acceso con roles de administrador, encargado y técnico.
 - Dashboard, búsqueda por orden/cliente/teléfono/placa, resumen anual y nota imprimible.
 - Bitácora de operaciones asociada al usuario autenticado.

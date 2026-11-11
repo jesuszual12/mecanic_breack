@@ -10,13 +10,18 @@ class WorkOrder extends Model
 {
     protected $fillable = [
         'number', 'customer_id', 'vehicle_id', 'created_by', 'status', 'complaint', 'diagnosis',
-        'received_at', 'delivered_at', 'labor_cost', 'parts_cost', 'other_cost', 'total', 'paid',
-        'warranty_days', 'warranty_terms',
+        'received_at', 'scheduled_at', 'delivered_at', 'damage_points', 'labor_cost', 'parts_cost',
+        'other_cost', 'total', 'paid', 'warranty_days', 'warranty_terms',
     ];
 
     protected function casts(): array
     {
-        return ['received_at' => 'datetime', 'delivered_at' => 'datetime'];
+        return [
+            'received_at' => 'datetime',
+            'scheduled_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'damage_points' => 'array',
+        ];
     }
 
     public function customer(): BelongsTo

@@ -112,6 +112,75 @@ class ExampleTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'payment.created']);
     }
 
+    public function test_work_order_stores_body_damage_and_scheduled_time(): void
+    {
+        $customer = Customer::create(['name' => 'Eva Torres', 'phone' => '5554443322']);
+        $vehicle = Vehicle::create([
+            'customer_id' => $customer->id,
+            'make' => 'Seat',
+            'model' => 'Ibiza',
+            'plate' => 'DAN-123-A',
+        ]);
+        $scheduledAt = now()->addDay()->setTime(10, 30);
+
+        $this->post('/ordenes', [
+            'customer_id' => $customer->id,
+            'vehicle_id' => $vehicle->id,
+            'complaint' => 'Revisión de carrocería',
+            'scheduled_at' => $scheduledAt->format('Y-m-d\TH:i'),
+            'damage_points_json' => json_encode([
+                ['part' => 'left_front_door', 'detail' => 'Rayón profundo en la puerta'],
+            ], JSON_THROW_ON_ERROR),
+        ])->assertRedirect();
+
+        $order = WorkOrder::firstOrFail();
+        $this->assertEquals('left_front_door', $order->damage_points[0]['part']);
+        $this->assertEquals('Rayón profundo en la puerta', $order->damage_points[0]['detail']);
+        $this->assertEquals($scheduledAt->format('Y-m-d H:i'), $order->scheduled_at->format('Y-m-d H:i'));
+        $this->get(route('work-orders.show', $order))
+            ->assertOk()
+            ->assertSee('DAÑOS DE CARROCERÍA')
+            ->assertSee('Rayón profundo en la puerta');
+        $this->get(route('dashboard', [
+            'panel' => 'calendar',
+            'date' => $scheduledAt->toDateString(),
+        ]))->assertOk()->assertSee('10:30')->assertSee('DAN-123-A');
+    }
+
+    public function test_direct_inventory_sales_reduce_stock_and_count_as_daily_income(): void
+    {
+        $item = InventoryItem::create([
+            'name' => 'Filtro de aire',
+            'sku' => 'FIL-009',
+            'stock' => 5,
+            'minimum_stock' => 1,
+            'unit_cost' => 40,
+            'sale_price' => 75,
+        ]);
+
+        $this->post(route('inventory.sales.store', $item), [
+            'quantity' => 2,
+            'payment_method' => 'card',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'stock' => 3]);
+        $this->assertDatabaseHas('inventory_sales', [
+            'inventory_item_id' => $item->id,
+            'quantity' => 2,
+            'total' => 150,
+            'payment_method' => 'card',
+        ]);
+        $this->assertDatabaseHas('inventory_movements', [
+            'inventory_item_id' => $item->id,
+            'direction' => 'out',
+            'quantity' => 2,
+        ]);
+        $this->get(route('dashboard', ['panel' => 'calendar', 'date' => now()->toDateString()]))
+            ->assertOk()
+            ->assertSee('150.00')
+            ->assertSee('VENTAS DE REFACCIONES');
+    }
+
     public function test_expenses_and_payroll_are_saved_for_financial_reports(): void
     {
         $this->post('/gastos', [
@@ -143,6 +212,11 @@ class ExampleTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'marco@example.com', 'role' => 'technician']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'expense.created']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'payroll.paid']);
+        $this->get(route('dashboard', ['panel' => 'calendar', 'date' => now()->toDateString()]))
+            ->assertOk()
+            ->assertSee('850.00')
+            ->assertSee('3,200.00')
+            ->assertSee('NETO DEL DÍA');
     }
 
     public function test_vehicle_history_and_printable_work_order_note_are_available(): void
