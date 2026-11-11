@@ -1,26 +1,360 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nota {{ $workOrder->number }} | {{ $workshop['name'] }}</title>
     <style>
-        *{box-sizing:border-box}body{margin:0;background:#eef1ed;color:#202923;font:13px 'Segoe UI',sans-serif}.receipt-tools{max-width:760px;margin:20px auto;display:flex;justify-content:space-between}.receipt-tools a,.receipt-tools button{border:1px solid #d4ddd4;border-radius:4px;padding:9px 12px;background:#fff;color:#315e42;text-decoration:none;font:600 12px 'Segoe UI',sans-serif;cursor:pointer}.receipt{max-width:760px;margin:0 auto 30px;padding:42px 48px;background:#fff;border:1px solid #e1e6e0}.receipt-head{display:flex;justify-content:space-between;gap:20px;padding-bottom:20px;border-bottom:2px solid #294d37}.receipt-brand{font-size:19px;font-weight:700;color:#254a34}.receipt-head p,.receipt-meta p{margin:5px 0;color:#718078;font-size:11px}.receipt-number{text-align:right}.receipt-number small,.receipt-number strong{display:block}.receipt-number small,.receipt-label{color:#849087;font-size:9px;letter-spacing:1px;font-weight:700}.receipt-number strong{margin-top:7px;color:#2a563a;font-size:16px}.receipt-meta{display:grid;grid-template-columns:1fr 1fr;gap:15px;padding:19px 0}.receipt-meta h2{font-size:13px;margin:6px 0}.receipt-section{margin-top:15px}.receipt-section h2{font-size:11px;letter-spacing:.5px}.receipt table{width:100%;border-collapse:collapse;margin-top:9px}.receipt th,.receipt td{padding:9px 7px;border-bottom:1px solid #e8ece7;text-align:left;font-size:11px}.receipt th{background:#f5f7f4;color:#77847b;font-size:9px;letter-spacing:.6px}.receipt .numeric{text-align:right}.receipt-total{margin:18px 0 0 auto;width:min(260px,100%)}.receipt-total div{display:flex;justify-content:space-between;padding:6px 0;color:#66736a}.receipt-total .grand{margin-top:4px;padding-top:11px;border-top:1px solid #dfe6df;color:#203e2c;font-size:16px;font-weight:700}.receipt-terms{margin-top:23px;padding:12px;background:#f5f7f4;font-size:11px;line-height:1.6}.receipt-signatures{display:grid;grid-template-columns:1fr 1fr;gap:50px;margin-top:52px}.receipt-signatures div{padding-top:8px;border-top:1px solid #cbd4cb;text-align:center;color:#728077;font-size:10px}.receipt-footer{margin-top:30px;text-align:center;color:#8b968e;font-size:9px}@media(max-width:800px){.receipt{margin:0 10px 20px;padding:24px}}@media print{body{background:#fff}.receipt-tools{display:none}.receipt{max-width:none;margin:0;padding:10mm;border:0}.receipt-signatures{break-inside:avoid}}
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: #eef1ed;
+            color: #202923;
+            font: 13px 'Segoe UI', sans-serif
+        }
+
+        .receipt-tools {
+            max-width: 760px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .receipt-tools a,
+        .receipt-tools button {
+            border: 1px solid #d4ddd4;
+            border-radius: 4px;
+            padding: 9px 12px;
+            background: #fff;
+            color: #315e42;
+            text-decoration: none;
+            font: 600 12px 'Segoe UI', sans-serif;
+            cursor: pointer
+        }
+
+        .receipt {
+            max-width: 760px;
+            margin: 0 auto 30px;
+            padding: 42px 48px;
+            background: #fff;
+            border: 1px solid #e1e6e0
+        }
+
+        .receipt-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #294d37
+        }
+
+        .receipt-brand {
+            font-size: 19px;
+            font-weight: 700;
+            color: #254a34
+        }
+
+        .receipt-head p,
+        .receipt-meta p {
+            margin: 5px 0;
+            color: #718078;
+            font-size: 11px
+        }
+
+        .receipt-number {
+            text-align: right
+        }
+
+        .receipt-number small,
+        .receipt-number strong {
+            display: block
+        }
+
+        .receipt-number small,
+        .receipt-label {
+            color: #849087;
+            font-size: 9px;
+            letter-spacing: 1px;
+            font-weight: 700
+        }
+
+        .receipt-number strong {
+            margin-top: 7px;
+            color: #2a563a;
+            font-size: 16px
+        }
+
+        .receipt-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 19px 0
+        }
+
+        .receipt-meta h2 {
+            font-size: 13px;
+            margin: 6px 0
+        }
+
+        .receipt-section {
+            margin-top: 15px
+        }
+
+        .receipt-section h2 {
+            font-size: 11px;
+            letter-spacing: .5px
+        }
+
+        .receipt table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 9px
+        }
+
+        .receipt th,
+        .receipt td {
+            padding: 9px 7px;
+            border-bottom: 1px solid #e8ece7;
+            text-align: left;
+            font-size: 11px
+        }
+
+        .receipt th {
+            background: #f5f7f4;
+            color: #77847b;
+            font-size: 9px;
+            letter-spacing: .6px
+        }
+
+        .receipt .numeric {
+            text-align: right
+        }
+
+        .receipt-total {
+            margin: 18px 0 0 auto;
+            width: min(260px, 100%)
+        }
+
+        .receipt-total div {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            color: #66736a
+        }
+
+        .receipt-total .grand {
+            margin-top: 4px;
+            padding-top: 11px;
+            border-top: 1px solid #dfe6df;
+            color: #203e2c;
+            font-size: 16px;
+            font-weight: 700
+        }
+
+        .receipt-terms {
+            margin-top: 23px;
+            padding: 12px;
+            background: #f5f7f4;
+            font-size: 11px;
+            line-height: 1.6
+        }
+
+        .receipt-signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-top: 52px
+        }
+
+        .receipt-signatures div {
+            padding-top: 8px;
+            border-top: 1px solid #cbd4cb;
+            text-align: center;
+            color: #728077;
+            font-size: 10px
+        }
+
+        .receipt-footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #8b968e;
+            font-size: 9px
+        }
+
+        @media(max-width:800px) {
+            .receipt {
+                margin: 0 10px 20px;
+                padding: 24px
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff
+            }
+
+            .receipt-tools {
+                display: none
+            }
+
+            .receipt {
+                max-width: none;
+                margin: 0;
+                padding: 10mm;
+                border: 0
+            }
+
+            .receipt-signatures {
+                break-inside: avoid
+            }
+        }
     </style>
     <style>
-        .company-seal{width:min(260px,100%);min-height:90px;margin:32px auto 12px;padding:12px;border:3px double #2d6546;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#2d6546;text-align:center;text-transform:uppercase;line-height:1.3;break-inside:avoid}.company-seal strong{font-size:15px}.company-seal span{font-size:9px;font-weight:700;letter-spacing:1px}.company-seal small,.company-seal b{font-size:8px}
+        .company-seal {
+            width: min(260px, 100%);
+            min-height: 90px;
+            margin: 32px auto 12px;
+            padding: 12px;
+            border: 3px double #2d6546;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            color: #2d6546;
+            text-align: center;
+            text-transform: uppercase;
+            line-height: 1.3;
+            break-inside: avoid
+        }
+
+        .company-seal strong {
+            font-size: 15px
+        }
+
+        .company-seal span {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1px
+        }
+
+        .company-seal small,
+        .company-seal b {
+            font-size: 8px
+        }
     </style>
 </head>
+
 <body>
-    <div class="receipt-tools"><a href="{{ route('work-orders.show', $workOrder) }}">← Volver a la orden</a><button type="button" onclick="window.print()">Imprimir comprobante</button></div>
+    <div class="receipt-tools"><a href="{{ route('work-orders.show', $workOrder) }}">← Volver a la orden</a><button
+            type="button" onclick="window.print()">Imprimir comprobante</button></div>
     <main class="receipt">
-        <header class="receipt-head"><div><div class="receipt-brand">{{ $workshop['name'] }}</div>@if ($workshop['address'])<p>{{ $workshop['address'] }}</p>@endif @if ($workshop['phone'])<p>Tel. {{ $workshop['phone'] }}</p>@endif @if ($workshop['tax_id'])<p>RFC {{ $workshop['tax_id'] }}</p>@endif</div><div class="receipt-number"><small>NOTA DE SERVICIO</small><strong>{{ $workOrder->number }}</strong><p>Fecha {{ $workOrder->received_at->format('d/m/Y') }}</p></div></header>
-        <section class="receipt-meta"><div><span class="receipt-label">CLIENTE</span><h2>{{ $workOrder->customer->name }}</h2><p>{{ $workOrder->customer->phone }}</p>@if ($workOrder->customer->email)<p>{{ $workOrder->customer->email }}</p>@endif</div><div><span class="receipt-label">VEHÍCULO</span><h2>{{ $workOrder->vehicle->make }} {{ $workOrder->vehicle->model }} {{ $workOrder->vehicle->year }}</h2><p>Placas {{ $workOrder->vehicle->plate }} · {{ $workOrder->vehicle->color }}</p>@if ($workOrder->vehicle->vin)<p>Serie {{ $workOrder->vehicle->vin }}</p>@endif</div></section>
-        <section class="receipt-section"><span class="receipt-label">TRABAJO SOLICITADO</span><p>{{ $workOrder->complaint }}</p></section>
-        <section class="receipt-section"><h2>Detalle de trabajos y refacciones</h2><table><thead><tr><th>DESCRIPCIÓN</th><th class="numeric">CANT.</th><th class="numeric">PRECIO</th><th class="numeric">IMPORTE</th></tr></thead><tbody>@forelse ($workOrder->items as $item)<tr><td>{{ $item->description }}</td><td class="numeric">{{ number_format($item->quantity, 2) }}</td><td class="numeric">${{ number_format($item->unit_price, 2) }}</td><td class="numeric">${{ number_format($item->quantity * $item->unit_price, 2) }}</td></tr>@empty @if ($workOrder->labor_cost > 0)<tr><td>Mano de obra</td><td class="numeric">1</td><td class="numeric">${{ number_format($workOrder->labor_cost, 2) }}</td><td class="numeric">${{ number_format($workOrder->labor_cost, 2) }}</td></tr>@endif @if ($workOrder->parts_cost > 0)<tr><td>Refacciones</td><td class="numeric">1</td><td class="numeric">${{ number_format($workOrder->parts_cost, 2) }}</td><td class="numeric">${{ number_format($workOrder->parts_cost, 2) }}</td></tr>@endif @endforelse</tbody></table></section>
-        <div class="receipt-total"><div><span>Mano de obra</span><strong>${{ number_format($workOrder->labor_cost, 2) }}</strong></div><div><span>Refacciones</span><strong>${{ number_format($workOrder->parts_cost, 2) }}</strong></div><div class="grand"><span>Total</span><strong>${{ number_format($workOrder->total, 2) }}</strong></div><div><span>Pagado</span><strong>${{ number_format($workOrder->paid, 2) }}</strong></div><div><span>Saldo pendiente</span><strong>${{ number_format($workOrder->total - $workOrder->paid, 2) }}</strong></div></div>
-        <div class="receipt-terms"><strong>Garantía:</strong> @if ($workOrder->warranty_days > 0){{ $workOrder->warranty_days }} días. {{ $workOrder->warranty_terms ?: 'Aplican condiciones generales del taller.' }} @if ($workOrder->delivered_at) Vigente hasta {{ $workOrder->delivered_at->copy()->addDays($workOrder->warranty_days)->format('d/m/Y') }}.@endif @else Sin garantía registrada. @endif</div>
-        <div class="company-seal" role="img" aria-label="Sello del taller {{ $workshop['name'] }}"><strong>{{ $workshop['name'] }}</strong><span>Servicio automotriz</span>@if ($workshop['tax_id'])<small>RFC {{ $workshop['tax_id'] }}</small>@endif @if ($workshop['phone'])<small>{{ $workshop['phone'] }}</small>@endif<b>Orden {{ $workOrder->number }}</b></div><footer class="receipt-footer">Gracias por confiar en {{ $workshop['name'] }}. Este comprobante corresponde a una orden de servicio y no es un CFDI.</footer>
+        <header class="receipt-head">
+            <div>
+                <div class="receipt-brand">{{ $workshop['name'] }}</div>
+                @if ($workshop['address'])
+                    <p>{{ $workshop['address'] }}</p>
+                    @endif @if ($workshop['phone'])
+                        <p>Tel. {{ $workshop['phone'] }}</p>
+                        @endif @if ($workshop['tax_id'])
+                            <p>RFC {{ $workshop['tax_id'] }}</p>
+                        @endif
+            </div>
+            <div class="receipt-number"><small>NOTA DE SERVICIO</small><strong>{{ $workOrder->number }}</strong>
+                <p>Fecha {{ $workOrder->received_at->format('d/m/Y') }}</p>
+            </div>
+        </header>
+        <section class="receipt-meta">
+            <div><span class="receipt-label">CLIENTE</span>
+                <h2>{{ $workOrder->customer->name }}</h2>
+                <p>{{ $workOrder->customer->phone }}</p>
+                @if ($workOrder->customer->email)
+                    <p>{{ $workOrder->customer->email }}</p>
+                @endif
+            </div>
+            <div><span class="receipt-label">VEHÍCULO</span>
+                <h2>{{ $workOrder->vehicle->make }} {{ $workOrder->vehicle->model }} {{ $workOrder->vehicle->year }}
+                </h2>
+                <p>Placas {{ $workOrder->vehicle->plate }} · {{ $workOrder->vehicle->color }}</p>
+                @if ($workOrder->vehicle->vin)
+                    <p>Serie {{ $workOrder->vehicle->vin }}</p>
+                @endif
+            </div>
+        </section>
+        <section class="receipt-section"><span class="receipt-label">TRABAJO SOLICITADO</span>
+            <p>{{ $workOrder->complaint }}</p>
+        </section>
+        <section class="receipt-section">
+            <h2>Detalle de trabajos y refacciones</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>DESCRIPCIÓN</th>
+                        <th class="numeric">CANT.</th>
+                        <th class="numeric">PRECIO</th>
+                        <th class="numeric">IMPORTE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($workOrder->items as $item)
+                        <tr>
+                            <td>{{ $item->description }}</td>
+                            <td class="numeric">{{ number_format($item->quantity, 2) }}</td>
+                            <td class="numeric">${{ number_format($item->unit_price, 2) }}</td>
+                            <td class="numeric">${{ number_format($item->quantity * $item->unit_price, 2) }}</td>
+                        </tr>@empty @if ($workOrder->labor_cost > 0)
+                            <tr>
+                                <td>Mano de obra</td>
+                                <td class="numeric">1</td>
+                                <td class="numeric">${{ number_format($workOrder->labor_cost, 2) }}</td>
+                                <td class="numeric">${{ number_format($workOrder->labor_cost, 2) }}</td>
+                            </tr>
+                            @endif @if ($workOrder->parts_cost > 0)
+                                <tr>
+                                    <td>Refacciones</td>
+                                    <td class="numeric">1</td>
+                                    <td class="numeric">${{ number_format($workOrder->parts_cost, 2) }}</td>
+                                    <td class="numeric">${{ number_format($workOrder->parts_cost, 2) }}</td>
+                                </tr>
+                            @endif
+                        @endforelse
+                </tbody>
+            </table>
+        </section>
+        <div class="receipt-total">
+            <div><span>Mano de obra</span><strong>${{ number_format($workOrder->labor_cost, 2) }}</strong></div>
+            <div><span>Refacciones</span><strong>${{ number_format($workOrder->parts_cost, 2) }}</strong></div>
+            <div class="grand"><span>Total</span><strong>${{ number_format($workOrder->total, 2) }}</strong></div>
+            <div><span>Pagado</span><strong>${{ number_format($workOrder->paid, 2) }}</strong></div>
+            <div><span>Saldo
+                    pendiente</span><strong>${{ number_format($workOrder->total - $workOrder->paid, 2) }}</strong>
+            </div>
+        </div>
+        <div class="receipt-terms"><strong>Garantía:</strong>
+            @if ($workOrder->warranty_days > 0){{ $workOrder->warranty_days }} días.
+                {{ $workOrder->warranty_terms ?: 'Aplican condiciones generales del taller.' }} @if ($workOrder->delivered_at)
+                    Vigente hasta
+                    {{ $workOrder->delivered_at->copy()->addDays($workOrder->warranty_days)->format('d/m/Y') }}.
+                @endif
+            @else
+                Sin garantía registrada. @endif
+        </div>
+        <div class="company-seal" role="img" aria-label="Sello del taller {{ $workshop['name'] }}">
+            <strong>{{ $workshop['name'] }}</strong><span>Servicio automotriz</span>
+            @if ($workshop['tax_id'])
+                <small>RFC {{ $workshop['tax_id'] }}</small>
+                @endif @if ($workshop['phone'])
+                    <small>{{ $workshop['phone'] }}</small>
+                @endif
+                <b>Orden {{ $workOrder->number }}</b>
+        </div>
+        <footer class="receipt-footer">Gracias por confiar en {{ $workshop['name'] }}. Este comprobante corresponde a
+            una orden de servicio y no es un CFDI.</footer>
     </main>
 </body>
+
 </html>
